@@ -28,8 +28,8 @@ def searchDomain(ip: str):
             domain.extend(eval(func[rand])(ip))
             func.pop(rand)
 
-        if not domain:
-            domain.extend(aizhanvip(ip))
+        #if not domain:
+        #    domain.extend(aizhanvip(ip))
     except:
         print('searchDomain Func Error')
     finally:
@@ -37,7 +37,7 @@ def searchDomain(ip: str):
 
 
 def aizhanvip(ip: str):
-    key = '7fbaa08f9ef6a58c668c0757f687c628'
+    key = '' #自己花钱
     url = 'https://apistore.aizhan.com/site/dnsinfos/{key}?query={ip}&page=1'.format(key=key, ip=ip)
     domain = []
     try:
