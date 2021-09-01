@@ -1,2 +1,2 @@
 # xjjsuite
-xjjsuite\modules\fofa\\__init__.py添加fofakey
+xjjsuite\modules\fofa\\_\_init_\_.py添加fofakey
