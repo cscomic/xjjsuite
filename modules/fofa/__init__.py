@@ -13,10 +13,10 @@ class fofasearch:
         self.searchparse = self.basesearchparse
 
     def getAllHosts(self):
-        email = '2849771625@qq.com'
-        key = 'be24a5d685e467767ce339bc4e49fbb5'
+        email = ''
+        key = ''
         search = pyfofa.FofaAPI(email, key)
-        data = search.get_data(self.searchparse, 10000, 'host')
+        data = search.get_data(self.searchparse, 10000, 'host')#查询的语法，数量，返回内容
         if not data['error']:
             data = data['results']
         else:
